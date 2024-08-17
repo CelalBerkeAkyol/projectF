@@ -1,42 +1,38 @@
 const express = require("express");
 const router = express.Router();
-const {getUserFromDatabase,postUserToDatabase,deleteUserFromDatabase,updateUserFromDatabase} = require("../controllers/userController");
-const verifyToken  = require("../middlewares/authMiddleware"); // kullanıcı kontrolü burada yapılıyor 
-const tokenCreater = require("../controllers/authController"); // token burada oluşturuluyor 
+const {
+  getAllUserFromDatabase,
+  deleteAllUsersFromDatabase,
+  updateUserFromDatabase,
+  getUserByIDFromDatabase,
+  deleteUserFromDatabase,
+} = require("../controllers/userController");
+const { getAccessToRoute, isAdmin } = require("../middlewares/authMiddleware"); // kullanıcı kontrolü burada yapılıyor
 
-// mongo database işlemleri yapılacak 
+// Veri tabanı
 const mongosee = require("mongoose");
 const User = require("../Models/UserSchema");
 
+// ---> / ile belirtilen route {{url}}/api/user
 
-// get isteği ile veri tabanındaki userları çekme 
-router.get("/",getUserFromDatabase );
+// tüm userları çekme
+router.get("/", getAllUserFromDatabase);
 
-// post isteği ile veri tabanına kullanıcı ekleme 
-router.post("/", postUserToDatabase );
+// bir kişiyi çekme
+router.get("/:id", getUserByIDFromDatabase);
 
-// delete isteği ile kişi silenecek 
-router.delete("/:id",deleteUserFromDatabase);
+// bir kullanıcı güncelleme
+router.put("/:id", getAccessToRoute, updateUserFromDatabase);
 
-// kullanıcı güncelleme 
-router.put("/:id" , updateUserFromDatabase);
-  
-// delete all user route giriş için şifre ve token alımı 
-router.post("/delete-all-users",tokenCreater);
+// bir kişi silenecek
+router.delete("/:id", getAccessToRoute, isAdmin, deleteUserFromDatabase);
 
-// to do -> token ile kontrol et  
-// userRouter'deki tümn veriler yani tüm kullanıcılar silinecek 
+// tüm kulllanıcıları silme
+router.post(
+  "/delete-all-users",
+  getAccessToRoute,
+  isAdmin,
+  deleteAllUsersFromDatabase
+);
 
-router.get("/delete-all-users", verifyToken, async (req, res) => {
-  try {
-    await User.deleteMany({});
-    res.send("All users are deleted");
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
-
-
-
-module.exports = router; 
+module.exports = router;

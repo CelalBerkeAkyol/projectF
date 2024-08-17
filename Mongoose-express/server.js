@@ -1,6 +1,10 @@
 const express = require('express')
+require('dotenv').config();
+
 const connectDatabase = require("./Helpers/connectDatabase");
 const router = require("./Routers/index");
+
+
 
 const app = express()
 const port = 3000

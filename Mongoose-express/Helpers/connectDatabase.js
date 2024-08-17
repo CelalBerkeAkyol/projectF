@@ -1,14 +1,14 @@
 const mongoose = require("mongoose");
-const connectDatabase = () => {
-    
-    mongoose.connect('mongodb+srv://buscberke:HSv8RZ0fIqJeqqPe@clusterfero.50rkaal.mongodb.net/')
-    .then(()=> {
-        console.log("MongoDb conneciton succesfull");
 
+const conntectToDatabase = () =>{
+    mongoose.connect(process.env.MONGOOSE_URL)
+    .then(() =>{
+        console.log("Connection is succesfull");
+    
     })
     .catch(err=>{
+        console.log("Connection is unsuccesfull");
         console.error(err);
-    })
-};
-
-module.exports = connectDatabase;
+        })
+}
+module.exports = conntectToDatabase;

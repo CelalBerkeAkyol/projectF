@@ -1,4 +1,8 @@
-const validateUserInput = (email,password) => {
-    return email && password; 
+const bcrypt = require("bcryptjs");
+const validateUserInput = (email, password) => {
+  return email && password;
 };
-module.exports = {validateUserInput}
+const comparePassword = async (password, hashedPassword) => {
+  return await bcrypt.compare(password, hashedPassword);
+};
+module.exports = { validateUserInput, comparePassword };
