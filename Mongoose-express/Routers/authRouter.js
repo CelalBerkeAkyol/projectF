@@ -6,6 +6,7 @@ const { access_token_using_refresh_token } = require("../Helpers/tokenHelpers");
 const {
   login,
   register,
+  forgotPassword,
   blocked,
   unblock,
 } = require("../controllers/authController"); // token burada oluşturuluyor
@@ -18,6 +19,8 @@ router.post("/register", register);
 router.get("/login/:id", getUserByIDFromDatabase);
 router.post("/login", login); // Kullanıcının email ve şifre bilgileiri veri tabanı ile eşleşirse giriş yapar
 // buraya refresh işlemleri atılacak
+
+router.post("/forgot-password", forgotPassword);
 router.post("/refresh-token", access_token_using_refresh_token);
 
 // Admin route'u, önce token doğrulaması yapılır, sonra admin kontrolü

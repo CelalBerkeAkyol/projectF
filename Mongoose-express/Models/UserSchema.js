@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 // bir kullanıcının hangi verileri olacak ve saklanacak
 const userSchema = new mongoose.Schema({
@@ -30,15 +31,38 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: " ",
   },
+  resetPasswordToken: {
+    type: String,
+    default: "",
+  },
+  resetPasswordExpire: {
+    type: Date,
+    default: Date.now(),
+  },
 });
+// ------ fonksiyonlar -------
+// reset password token oluşturucu
+userSchema.methods.getResetPasswordToken = function () {
+  const resetToken = crypto.randomBytes(15).toString("hex");
+  const { RESET_PASSWORD_EXPIRE } = process.env;
+  // veri tabanına kaydeder
+  this.resetPasswordToken = resetToken;
+  this.resetPasswordExpire = Date.now() + parseInt(RESET_PASSWORD_EXPIRE); // 5 dakika geçerli
+  return resetToken;
+};
+
+// Şifre hashlama
 userSchema.pre("save", function (next) {
-  // parola değişmemişse
-  if (this.isModified("password")) {
-    next();
+  if (!this.isModified("password")) {
+    return next();
   }
+
   bcrypt.genSalt(10, (err, salt) => {
+    if (err) return next(err);
+
     bcrypt.hash(this.password, salt, (err, hash) => {
-      // Store hash in your password DB.
+      if (err) return next(err);
+
       this.password = hash;
       next();
     });

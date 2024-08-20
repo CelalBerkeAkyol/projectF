@@ -9,7 +9,8 @@ const {
   access_token_creater,
   refresh_token_creater,
 } = require("../Helpers/tokenHelpers");
-const mongosee = require("mongoose");
+const { sendEmail } = require("../Helpers/mailSender");
+const mongoose = require("mongoose");
 const User = require("../Models/UserSchema"); // User bir colleciton
 
 const login = async (req, res, next) => {
@@ -104,6 +105,61 @@ const register = async (req, res) => {
     return next(error);
   }
 };
+const forgotPassword = async (req, res, next) => {
+  const reset_email = req.body.email;
+  // hata fırlatılabilir kontrol etmek lazım
+
+  try {
+    const user = await User.findOne({ email: reset_email });
+
+    // bu kullanıcı var mı ?
+    if (!user) {
+      console.log("Böyle bir kullanıcı bulunmuyor");
+      return res
+        .status(404)
+        .send("Böyle bir kullanıcı bulunmuyor email'i tekrar gözden geçirin");
+    }
+    // kullanıcı varsa ve başarılı olunursa
+    const resetPasswordToken = await user.getResetPasswordToken();
+    await user.save();
+
+    //parola resetleme url
+    const resetPasswordUrl = `http://localhost:3000/api/auth/resetpassword?resetPasswordToken=${resetPasswordToken}`;
+    const emailTemplate = `
+    <h3>Reset Your Password</h3>
+    <p>This <a href = '${resetPasswordUrl}' target = '_blank'>link</a>  will expire in 1 hour</p>
+    
+`;
+    // mail gönderimi için try catch
+    try {
+      await sendEmail({
+        from: process.env.USER,
+        to: reset_email,
+        subject: "Reset Password Token",
+        html: emailTemplate,
+      });
+      return res.status(200).json({
+        success: true,
+        message: "Email Sent",
+        data: user, // burası doğru mu ?
+      });
+    } catch (err) {
+      // hata olursa tokenleri iptal ediyor
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      // kullanıcı sıfırlanmış tokenler ile kaydedilir
+      user.save();
+      // hata console yazdırılıyor
+      console.log(err);
+      return next(err);
+    }
+    // genel hata yakalama
+  } catch (error) {
+    console.log(err);
+    return next(error);
+  }
+};
+
 const blocked = async (req, res, next) => {
   const { id } = req.params;
 
@@ -136,4 +192,5 @@ module.exports = {
   register,
   blocked,
   unblock,
+  forgotPassword,
 };
